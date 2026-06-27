@@ -1,0 +1,6 @@
+{
+  "name": "uScale Voice",
+  "description": "Generate authentic Algerian Arabic (Darja) text-to-speech with our professional AI. Supports all regional dialects . Perfect for media & content.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
