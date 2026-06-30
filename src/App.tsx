@@ -23,7 +23,7 @@ import {
   Mail,
   Phone,
   MessageSquare,
-  Key
+  Key,
 } from "lucide-react";
 import { PRESET_SCRIPTS } from "./components/Presets";
 import { HistoryItem, PresetScript } from "./types";
@@ -50,7 +50,7 @@ import {
   signInWithPopup,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  signOut
+  signOut,
 } from "./lib/firebase";
 import { onSnapshot } from "firebase/firestore";
 
@@ -105,7 +105,9 @@ export default function App() {
   const [isFirebaseLoading, setIsFirebaseLoading] = useState(true);
 
   // New States for Authentication & Admin panel
-  const [isAdminView, setIsAdminView] = useState(window.location.pathname === "/admin");
+  const [isAdminView, setIsAdminView] = useState(
+    window.location.pathname === "/admin",
+  );
   const [credits, setCredits] = useState<number | null>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -137,11 +139,11 @@ export default function App() {
       const q = query(
         collection(db, "voiceovers"),
         where("userId", "==", userId),
-        orderBy("createdAt", "desc")
+        orderBy("createdAt", "desc"),
       );
       const querySnapshot = await getDocs(q);
       const cloudItems: HistoryItem[] = [];
-      
+
       querySnapshot.forEach((docSnap) => {
         const data = docSnap.data();
         const base64 = data.audioBase64 || "";
@@ -163,7 +165,7 @@ export default function App() {
           vibeDescription: data.vibeDescription || "",
           pronunciationGuide: data.pronunciationGuide || "",
           mimeType: mimeType,
-          audioBase64: base64
+          audioBase64: base64,
         });
       });
 
@@ -191,7 +193,7 @@ export default function App() {
                 timestamp: item.timestamp,
                 vibeDescription: item.vibeDescription,
                 pronunciationGuide: item.pronunciationGuide,
-                createdAt: new Date(parseInt(item.id) || Date.now())
+                createdAt: new Date(parseInt(item.id) || Date.now()),
               });
             }
             // Reload after sync
@@ -248,31 +250,38 @@ export default function App() {
       body: JSON.stringify({
         userId: user.uid,
         email: user.email || "",
-        username: user.displayName || user.email?.split("@")[0] || (user.isAnonymous ? "زائر" : "مستخدم")
+        username:
+          user.displayName ||
+          user.email?.split("@")[0] ||
+          (user.isAnonymous ? "زائر" : "مستخدم"),
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        console.log("Profile sync complete:", data);
       })
-    })
-    .then(res => res.json())
-    .then(data => {
-      console.log("Profile sync complete:", data);
-    })
-    .catch(err => {
-      console.warn("Backend profile sync warning:", err);
-    });
+      .catch((err) => {
+        console.warn("Backend profile sync warning:", err);
+      });
 
     // 2. Setup real-time listener for credits and isAdmin privilege
     const userDocRef = doc(db, "users", user.uid);
-    const unsubscribeSnapshot = onSnapshot(userDocRef, (snap) => {
-      if (snap.exists()) {
-        const data = snap.data();
-        setCredits(data.credits ?? 0);
-        setUserProfile(data);
-      } else {
-        setCredits(0);
-        setUserProfile(null);
-      }
-    }, (err) => {
-      console.warn("Firestore user profile subscription error:", err);
-    });
+    const unsubscribeSnapshot = onSnapshot(
+      userDocRef,
+      (snap) => {
+        if (snap.exists()) {
+          const data = snap.data();
+          setCredits(data.credits ?? 0);
+          setUserProfile(data);
+        } else {
+          setCredits(0);
+          setUserProfile(null);
+        }
+      },
+      (err) => {
+        console.warn("Firestore user profile subscription error:", err);
+      },
+    );
 
     return () => unsubscribeSnapshot();
   }, [user]);
@@ -281,7 +290,10 @@ export default function App() {
   const saveHistory = (newHistory: HistoryItem[]) => {
     setHistory(newHistory);
     setTotalVoiceovers(newHistory.length);
-    localStorage.setItem("algerian_voiceover_history", JSON.stringify(newHistory));
+    localStorage.setItem(
+      "algerian_voiceover_history",
+      JSON.stringify(newHistory),
+    );
   };
 
   // Preset Selection handler
@@ -364,14 +376,16 @@ export default function App() {
           voice,
           speed,
           emotion,
-          userId: user?.uid
+          userId: user?.uid,
         }),
       });
 
       if (!response.ok) {
         const errData = await response.json();
         if (response.status === 402) {
-          throw new Error("رصيدك غير كافٍ لتوليد التعليق الصوتي! يرجى شحن حسابك بالاتصال بنا على 0654049765 أو عبر واتساب.");
+          throw new Error(
+            "رصيدك غير كافٍ لتوليد التعليق الصوتي! يرجى شحن حسابك بالاتصال بنا على 0654049765 أو عبر واتساب.",
+          );
         }
         throw new Error(errData.error || "فشل توليد الفويس أوفر.");
       }
@@ -409,12 +423,12 @@ export default function App() {
           hour: "2-digit",
           minute: "2-digit",
           day: "numeric",
-          month: "short"
+          month: "short",
         }),
         vibeDescription: vibeDescription,
         pronunciationGuide: pronunciationGuide,
         mimeType: responseMimeType,
-        audioBase64: base64Audio
+        audioBase64: base64Audio,
       };
 
       saveHistory([newItem, ...history]);
@@ -438,11 +452,14 @@ export default function App() {
             timestamp: newItem.timestamp,
             vibeDescription: newItem.vibeDescription,
             pronunciationGuide: newItem.pronunciationGuide,
-            createdAt: new Date()
+            createdAt: new Date(),
           });
           console.log("Successfully saved voiceover to Firebase Cloud!");
         } catch (cloudErr) {
-          console.error("Failed to save voiceover to Firebase Cloud:", cloudErr);
+          console.error(
+            "Failed to save voiceover to Firebase Cloud:",
+            cloudErr,
+          );
         }
       }
     } catch (err: any) {
@@ -454,7 +471,10 @@ export default function App() {
   };
 
   // Handle script loaded from custom script writer
-  const handleCustomScriptGenerated = (generatedScript: string, title: string) => {
+  const handleCustomScriptGenerated = (
+    generatedScript: string,
+    title: string,
+  ) => {
     setOriginalScript(generatedScript);
     setScriptTitle(title);
     setAdaptedArabic("");
@@ -493,8 +513,12 @@ export default function App() {
         if (!authUsername.trim()) {
           throw new Error("الرجاء إدخال اسم مستخدم صالح.");
         }
-        const credential = await createUserWithEmailAndPassword(auth, authEmail, authPassword);
-        
+        const credential = await createUserWithEmailAndPassword(
+          auth,
+          authEmail,
+          authPassword,
+        );
+
         // Call sync-user endpoint to write username details to Firestore
         await fetch("/api/sync-user", {
           method: "POST",
@@ -502,8 +526,8 @@ export default function App() {
           body: JSON.stringify({
             userId: credential.user.uid,
             email: authEmail,
-            username: authUsername
-          })
+            username: authUsername,
+          }),
         });
       } else {
         // Sign In Flow
@@ -514,10 +538,18 @@ export default function App() {
       console.error("Email Auth error:", err);
       if (err.code === "auth/email-already-in-use") {
         setAuthError("هذا البريد الإلكتروني مستخدم بالفعل من قبل حساب آخر.");
-      } else if (err.code === "auth/wrong-password" || err.code === "auth/user-not-found" || err.code === "auth/invalid-credential") {
+      } else if (
+        err.code === "auth/wrong-password" ||
+        err.code === "auth/user-not-found" ||
+        err.code === "auth/invalid-credential"
+      ) {
         setAuthError("البريد الإلكتروني أو كلمة المرور غير صحيحة.");
       } else if (err.code === "auth/weak-password") {
         setAuthError("يجب أن تكون كلمة المرور مكونة من 6 أحرف على الأقل.");
+      } else if (err.code === "auth/operation-not-allowed") {
+        setAuthError(
+          "تم تعطيل تسجيل الحساب بالبريد الإلكتروني في إعدادات Firebase. الرجاء تفعيل Email/Password من Firebase Console > Authentication > Sign-in method.",
+        );
       } else {
         setAuthError(err.message || "حدث خطأ غير متوقع أثناء تسجيل الدخول.");
       }
@@ -564,7 +596,7 @@ export default function App() {
         try {
           const q = query(
             collection(db, "voiceovers"),
-            where("userId", "==", user.uid)
+            where("userId", "==", user.uid),
           );
           const querySnapshot = await getDocs(q);
           const deletePromises: any[] = [];
@@ -572,7 +604,9 @@ export default function App() {
             deletePromises.push(deleteDoc(docSnapshot.ref));
           });
           await Promise.all(deletePromises);
-          console.log("Successfully cleared all voiceovers from Firebase Cloud!");
+          console.log(
+            "Successfully cleared all voiceovers from Firebase Cloud!",
+          );
         } catch (err) {
           console.error("Failed to clear voiceovers from Firebase Cloud:", err);
         }
@@ -619,7 +653,9 @@ export default function App() {
         <div className="absolute top-0 right-0 w-[400px] h-[400px] rounded-full bg-cyan-500/5 blur-[120px] pointer-events-none" />
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-10 h-10 animate-spin text-cyan-400" />
-          <p className="text-xs text-slate-400 font-bold font-mono uppercase tracking-wider text-center">جاري تحميل أستوديو صوت الدّارجة...</p>
+          <p className="text-xs text-slate-400 font-bold font-mono uppercase tracking-wider text-center">
+            جاري تحميل أستوديو صوت الدّارجة...
+          </p>
         </div>
       </div>
     );
@@ -627,10 +663,10 @@ export default function App() {
 
   // If Admin panel view is active, hijack the rendering completely to show modular Admin Panel
   if (isAdminView) {
-    const isAuthorizedAdmin = user && !user.isAnonymous && (
-      user.email === "deniabcn004@gmail.com" || 
-      userProfile?.isAdmin === true
-    );
+    const isAuthorizedAdmin =
+      user &&
+      !user.isAnonymous &&
+      (user.email === "deniabcn004@gmail.com" || userProfile?.isAdmin === true);
 
     if (isAuthorizedAdmin) {
       return (
@@ -674,19 +710,29 @@ export default function App() {
             <div className="bg-cyan-500/10 p-3 rounded-full border border-cyan-500/20">
               <Shield className="w-8 h-8 text-cyan-400" />
             </div>
-            <h2 className="text-white font-extrabold text-lg mt-2">بوابة تسجيل دخول الإدارة 🛡️</h2>
-            <p className="text-xs text-slate-400 text-center font-mono">uScale Algerian Dialect System</p>
+            <h2 className="text-white font-extrabold text-lg mt-2">
+              بوابة تسجيل دخول الإدارة 🛡️
+            </h2>
+            <p className="text-xs text-slate-400 text-center font-mono">
+              uScale Algerian Dialect System
+            </p>
           </div>
 
           {user && !user.isAnonymous && !isAuthorizedAdmin && (
             <div className="bg-red-950/20 border border-red-900/30 p-4 rounded-xl text-xs text-red-400 leading-relaxed text-center font-bold">
-              عذراً، الحساب الحالي ({user.email}) لا يملك صلاحيات الإدارة للوصول إلى لوحة التحكم.
+              عذراً، الحساب الحالي ({user.email}) لا يملك صلاحيات الإدارة للوصول
+              إلى لوحة التحكم.
             </div>
           )}
 
-          <form onSubmit={handleAdminLoginSubmit} className="flex flex-col gap-4">
+          <form
+            onSubmit={handleAdminLoginSubmit}
+            className="flex flex-col gap-4"
+          >
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs text-slate-300 font-bold">البريد الإلكتروني للإدارة:</label>
+              <label className="text-xs text-slate-300 font-bold">
+                البريد الإلكتروني للإدارة:
+              </label>
               <input
                 type="email"
                 required
@@ -698,7 +744,9 @@ export default function App() {
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs text-slate-300 font-bold">كلمة المرور:</label>
+              <label className="text-xs text-slate-300 font-bold">
+                كلمة المرور:
+              </label>
               <input
                 type="password"
                 required
@@ -709,7 +757,11 @@ export default function App() {
               />
             </div>
 
-            {authError && <p className="text-[11px] text-red-400 text-center font-bold">{authError}</p>}
+            {authError && (
+              <p className="text-[11px] text-red-400 text-center font-bold">
+                {authError}
+              </p>
+            )}
 
             <button
               type="submit"
@@ -732,7 +784,9 @@ export default function App() {
 
           <div className="relative flex py-2 items-center">
             <div className="flex-grow border-t border-slate-800"></div>
-            <span className="flex-shrink mx-4 text-slate-500 text-[10px] uppercase font-bold">أو تسجيل سريع</span>
+            <span className="flex-shrink mx-4 text-slate-500 text-[10px] uppercase font-bold">
+              أو تسجيل سريع
+            </span>
             <div className="flex-grow border-t border-slate-800"></div>
           </div>
 
@@ -741,7 +795,10 @@ export default function App() {
             className="w-full bg-slate-950 hover:bg-slate-900 border border-slate-800 text-xs text-white font-bold py-3 rounded-xl cursor-pointer transition-all flex items-center justify-center gap-2.5"
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24">
-              <path fill="#EA4335" d="M12.24 10.285V14.4h6.887c-.648 2.41-2.519 4.14-5.136 4.14A5.64 5.64 0 0 1 8.3 12.9a5.64 5.64 0 0 1 5.69-5.64c1.556 0 2.978.61 4.053 1.62l3.11-3.11A10.02 10.02 0 0 0 13.99 2 9.98 9.98 0 0 0 4 11.97a9.98 9.98 0 0 0 9.99 9.97c5.51 0 10.01-4 10.01-9.97 0-.6-.05-1.18-.15-1.685z"/>
+              <path
+                fill="#EA4335"
+                d="M12.24 10.285V14.4h6.887c-.648 2.41-2.519 4.14-5.136 4.14A5.64 5.64 0 0 1 8.3 12.9a5.64 5.64 0 0 1 5.69-5.64c1.556 0 2.978.61 4.053 1.62l3.11-3.11A10.02 10.02 0 0 0 13.99 2 9.98 9.98 0 0 0 4 11.97a9.98 9.98 0 0 0 9.99 9.97c5.51 0 10.01-4 10.01-9.97 0-.6-.05-1.18-.15-1.685z"
+              />
             </svg>
             تسجيل الدخول بواسطة حساب Gmail
           </button>
@@ -766,7 +823,7 @@ export default function App() {
   const isLogged = user && !user.isAnonymous;
   if (!isLogged) {
     return (
-      <AuthGateway 
+      <AuthGateway
         onAuthSuccess={() => {
           console.log("Logged in successfully, unlocking studio.");
         }}
@@ -791,19 +848,20 @@ export default function App() {
               <span className="text-white font-extrabold text-sm tracking-tight flex items-center gap-1 flex-row-reverse">
                 صوت الدّارجة
               </span>
-              <span className="text-[9px] text-slate-500 font-mono">uScale Voice Studio</span>
+              <span className="text-[9px] text-slate-500 font-mono">
+                uScale Voice Studio
+              </span>
             </div>
           </div>
 
           {/* User Account / Auth Control and stats */}
           <div className="flex items-center gap-3">
-            
             {/* If user is logged in (and not anonymous) */}
             {user && !user.isAnonymous ? (
               <div className="flex items-center gap-3">
-                
                 {/* Admin Access Privilege Indicator */}
-                {(userProfile?.isAdmin === true || user.email === "deniabcn004@gmail.com") && (
+                {(userProfile?.isAdmin === true ||
+                  user.email === "deniabcn004@gmail.com") && (
                   <button
                     onClick={() => {
                       window.history.pushState({}, "", "/admin");
@@ -828,7 +886,9 @@ export default function App() {
                 {/* User email badge */}
                 <div className="hidden xs:flex items-center gap-1.5 bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5">
                   <User className="w-3.5 h-3.5 text-slate-400" />
-                  <span className="text-xs text-slate-300 max-w-[120px] truncate">{userProfile?.username || user.email?.split("@")[0]}</span>
+                  <span className="text-xs text-slate-300 max-w-[120px] truncate">
+                    {userProfile?.username || user.email?.split("@")[0]}
+                  </span>
                 </div>
 
                 {/* Sign Out Button */}
@@ -839,17 +899,17 @@ export default function App() {
                 >
                   <LogOut className="w-4 h-4" />
                 </button>
-
               </div>
             ) : (
               // Anonymous / Guest Guest Mode
               <div className="flex items-center gap-3">
-                
                 {/* Guest balance show if they have any */}
                 {credits !== null && credits > 0 && (
                   <div className="hidden sm:flex items-center gap-1 bg-slate-900/60 border border-slate-800 px-2.5 py-1 rounded-xl">
                     <Coins className="w-3 h-3 text-amber-400" />
-                    <span className="text-[10px] text-slate-400">رصيد تجريبي: {credits}</span>
+                    <span className="text-[10px] text-slate-400">
+                      رصيد تجريبي: {credits}
+                    </span>
                   </div>
                 )}
 
@@ -867,13 +927,14 @@ export default function App() {
                   <Sparkles className="w-3.5 h-3.5 text-slate-950" />
                   تسجيل الدخول / حساب جديد
                 </button>
-
               </div>
             )}
 
             {/* General studio indicators */}
             <div className="hidden lg:flex items-center gap-2 bg-slate-900 px-2.5 py-1.5 rounded-xl border border-slate-800">
-              <span className="text-[10px] text-slate-400 font-bold">المنتج: {totalVoiceovers}</span>
+              <span className="text-[10px] text-slate-400 font-bold">
+                المنتج: {totalVoiceovers}
+              </span>
             </div>
 
             <div className="flex items-center gap-2 bg-cyan-500/10 px-2.5 py-1.5 rounded-lg border border-cyan-500/15">
@@ -881,7 +942,9 @@ export default function App() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
               </span>
-              <span className="text-[10px] font-bold text-cyan-400 uppercase tracking-wider font-mono">Gemini AI Active</span>
+              <span className="text-[10px] font-bold text-cyan-400 uppercase tracking-wider font-mono">
+                Gemini AI Active
+              </span>
             </div>
           </div>
         </div>
@@ -889,10 +952,8 @@ export default function App() {
 
       {/* Main Studio Area */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
-        
         {/* RIGHT COLUMN: Output, Player, and Archived History (5 Cols) */}
         <div className="lg:col-span-5 flex flex-col gap-6 order-1 lg:order-2">
-          
           {/* Section: Premium Audio Player */}
           <div className="flex flex-col gap-2">
             <h3 className="text-slate-400 text-xs font-bold uppercase tracking-wider text-right flex items-center justify-end gap-1.5">
@@ -917,11 +978,14 @@ export default function App() {
                 <Coins className="w-4 h-4 text-amber-400" />
                 <span>شحن حسابك وتعبئة النقاط 💳</span>
               </h4>
-              <span className="text-[10px] bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded border border-amber-500/20 font-mono font-bold">شحن سريع</span>
+              <span className="text-[10px] bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded border border-amber-500/20 font-mono font-bold">
+                شحن سريع
+              </span>
             </div>
-            
+
             <p className="text-slate-400 text-xs leading-relaxed">
-              تحتاج إلى المزيد من النقاط لإنتاج تعليقات صوتية غير محدودة؟ اتصل بنا أو راسلنا الآن لشحن حسابك فوراً وتفعيل باقات النقاط الإضافية!
+              تحتاج إلى المزيد من النقاط لإنتاج تعليقات صوتية غير محدودة؟ اتصل
+              بنا أو راسلنا الآن لشحن حسابك فوراً وتفعيل باقات النقاط الإضافية!
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1">
@@ -961,7 +1025,7 @@ export default function App() {
                 </button>
               )}
             </div>
-            
+
             <HistoryList
               items={history}
               onPlay={handlePlayHistoryItem}
@@ -973,7 +1037,6 @@ export default function App() {
 
         {/* LEFT COLUMN: Input form, AI Generator, Dialect Adaptor (7 Cols) */}
         <div className="lg:col-span-7 flex flex-col gap-6 order-2 lg:order-1">
-          
           {/* Global notification alerts */}
           {error && (
             <div className="bg-red-950/30 border border-red-900/40 rounded-xl p-4 flex items-center gap-3 text-red-400 text-xs text-right flex-row-reverse">
@@ -996,18 +1059,24 @@ export default function App() {
                 <FileText className="w-5 h-5 text-cyan-400" />
                 <span>الخطوة 1: السكريبت والنص المكتوب</span>
               </h3>
-              <span className="text-[11px] text-slate-500">بداية من فكرة أو نص جاهز</span>
+              <span className="text-[11px] text-slate-500">
+                بداية من فكرة أو نص جاهز
+              </span>
             </div>
 
             {/* Presets selector */}
             <div className="flex flex-col gap-2 text-right">
-              <label className="text-xs text-slate-300 font-medium">اختر نموذجاً أو سكريبت جاهزاً للبدء:</label>
+              <label className="text-xs text-slate-300 font-medium">
+                اختر نموذجاً أو سكريبت جاهزاً للبدء:
+              </label>
               <select
                 onChange={(e) => handleSelectPreset(e.target.value)}
                 defaultValue=""
                 className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-xs text-slate-300 focus:outline-none focus:border-cyan-500 transition-colors text-right cursor-pointer"
               >
-                <option value="" disabled>-- اختر من النماذج الاحترافية --</option>
+                <option value="" disabled>
+                  -- اختر من النماذج الاحترافية --
+                </option>
                 {PRESET_SCRIPTS.map((preset) => (
                   <option key={preset.id} value={preset.id}>
                     {preset.title} ({preset.category})
@@ -1022,7 +1091,9 @@ export default function App() {
             {/* Standard Text input form */}
             <div className="flex flex-col gap-2 text-right">
               <div className="flex justify-between items-center flex-row-reverse">
-                <label className="text-xs text-slate-200 font-bold">النص الأصلي (بالعربية الفصحى أو بلغة أخرى):</label>
+                <label className="text-xs text-slate-200 font-bold">
+                  النص الأصلي (بالعربية الفصحى أو بلغة أخرى):
+                </label>
                 <input
                   type="text"
                   value={scriptTitle}
@@ -1035,7 +1106,7 @@ export default function App() {
                 value={originalScript}
                 onChange={(e) => {
                   setOriginalScript(e.target.value);
-                  if(!scriptTitle) setScriptTitle("سكريبت فويس اوفر جزائري");
+                  if (!scriptTitle) setScriptTitle("سكريبت فويس اوفر جزائري");
                 }}
                 rows={4}
                 placeholder="اكتب السكريبت هنا باللغة العربية الفصحى أو الفرنسية، أو الصق النص الذي ترغب في تحويله وإلقائه بالدّارجة الجزائرية..."
@@ -1052,18 +1123,38 @@ export default function App() {
                 <MapPin className="w-5 h-5 text-cyan-400" />
                 <span>الخطوة 2: تكييف وتحويل اللهجة الجزائرية</span>
               </h3>
-              <span className="text-[11px] text-slate-500">اختر اللكنة الفرعية الدقيقة</span>
+              <span className="text-[11px] text-slate-500">
+                اختر اللكنة الفرعية الدقيقة
+              </span>
             </div>
 
             {/* Sub-dialect Region cards selection */}
             <div className="flex flex-col gap-3 text-right">
-              <label className="text-xs text-slate-200 font-bold">اختر لهجة المنطقة الجغرافية:</label>
+              <label className="text-xs text-slate-200 font-bold">
+                اختر لهجة المنطقة الجغرافية:
+              </label>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {[
-                  { id: "central", name: "لكنة الوسط 🇩🇿", desc: "العاصمية والولايات المجاورة" },
-                  { id: "western", name: "لكنة الغرب 🍊", desc: "الوهرانية وولايات الغرب" },
-                  { id: "eastern", name: "لكنة الشرق 🏺", desc: "القسنطينية وباتنة وسطيف" },
-                  { id: "southern", name: "لكنة الجنوب 🌴", desc: "الصحراء والواحات وبشار" }
+                  {
+                    id: "central",
+                    name: "لكنة الوسط 🇩🇿",
+                    desc: "العاصمية والولايات المجاورة",
+                  },
+                  {
+                    id: "western",
+                    name: "لكنة الغرب 🍊",
+                    desc: "الوهرانية وولايات الغرب",
+                  },
+                  {
+                    id: "eastern",
+                    name: "لكنة الشرق 🏺",
+                    desc: "القسنطينية وباتنة وسطيف",
+                  },
+                  {
+                    id: "southern",
+                    name: "لكنة الجنوب 🌴",
+                    desc: "الصحراء والواحات وبشار",
+                  },
                 ].map((reg) => (
                   <button
                     key={reg.id}
@@ -1076,7 +1167,9 @@ export default function App() {
                     }`}
                   >
                     <span className="text-xs font-bold">{reg.name}</span>
-                    <span className="text-[9px] text-slate-500 text-center leading-normal">{reg.desc}</span>
+                    <span className="text-[9px] text-slate-500 text-center leading-normal">
+                      {reg.desc}
+                    </span>
                   </button>
                 ))}
               </div>
@@ -1084,14 +1177,16 @@ export default function App() {
 
             {/* Tone/Style categories for Dialect Adaptation */}
             <div className="flex flex-col gap-2 text-right">
-              <label className="text-xs text-slate-300 font-medium">روح وبناء الحوار المطلوب:</label>
+              <label className="text-xs text-slate-300 font-medium">
+                روح وبناء الحوار المطلوب:
+              </label>
               <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
                 {[
                   { id: "commercial", label: "تجاري سريع" },
                   { id: "conversational", label: "حواري طبيعي" },
                   { id: "documentary", label: "عميق ووقور" },
                   { id: "youthful", label: "شبابي شعبي" },
-                  { id: "formal", label: "رسمي جاد" }
+                  { id: "formal", label: "رسمي جاد" },
                 ].map((item) => (
                   <button
                     key={item.id}
@@ -1136,23 +1231,50 @@ export default function App() {
                 <Sliders className="w-5 h-5 text-cyan-400" />
                 <span>الخطوة 3: تخصيص الصوت ومقاييس الإلقاء</span>
               </h3>
-              <span className="text-[11px] text-slate-500">نبرة، سرعة وصوت المؤدي</span>
+              <span className="text-[11px] text-slate-500">
+                نبرة، سرعة وصوت المؤدي
+              </span>
             </div>
 
             {/* Voice actor prebuilt voices */}
             <div className="flex flex-col gap-3 text-right">
               <div className="flex items-center justify-end gap-1.5">
-                <label className="text-xs text-slate-200 font-bold">اختر معلقاً صوتياً بالذكاء الاصطناعي:</label>
-                <Info className="w-3.5 h-3.5 text-slate-500" title="أصوات تخصصية ممتازة للنطق بالدّارجة" />
+                <label className="text-xs text-slate-200 font-bold">
+                  اختر معلقاً صوتياً بالذكاء الاصطناعي:
+                </label>
+                <Info
+                  className="w-3.5 h-3.5 text-slate-500"
+                  title="أصوات تخصصية ممتازة للنطق بالدّارجة"
+                />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
                 {[
-                  { id: "Kore", name: "أمينة (Kore) 👩‍💼", desc: "نقي، عاصمي واحترافي" },
-                  { id: "Puck", name: "سليم (Puck) 👨‍💼", desc: "حيوي ومرح وسريع" },
-                  { id: "Zephyr", name: "جميلة (Zephyr) 👩‍🎨", desc: "لطيف، دافئ وقصصي" },
-                  { id: "Charon", name: "أمين (Charon) 👨‍🚀", desc: "عميق، وقور وإعلامي" },
-                  { id: "Fenrir", name: "ياسين (Fenrir) 👨‍🌾", desc: "ودود، هادئ وتواصلي" }
+                  {
+                    id: "Kore",
+                    name: "أمينة (Kore) 👩‍💼",
+                    desc: "نقي، عاصمي واحترافي",
+                  },
+                  {
+                    id: "Puck",
+                    name: "سليم (Puck) 👨‍💼",
+                    desc: "حيوي ومرح وسريع",
+                  },
+                  {
+                    id: "Zephyr",
+                    name: "جميلة (Zephyr) 👩‍🎨",
+                    desc: "لطيف، دافئ وقصصي",
+                  },
+                  {
+                    id: "Charon",
+                    name: "أمين (Charon) 👨‍🚀",
+                    desc: "عميق، وقور وإعلامي",
+                  },
+                  {
+                    id: "Fenrir",
+                    name: "ياسين (Fenrir) 👨‍🌾",
+                    desc: "ودود، هادئ وتواصلي",
+                  },
                 ].map((v) => (
                   <button
                     key={v.id}
@@ -1165,7 +1287,9 @@ export default function App() {
                     }`}
                   >
                     <span className="text-[11px] font-bold">{v.name}</span>
-                    <span className="text-[9px] text-slate-500 leading-normal">{v.desc}</span>
+                    <span className="text-[9px] text-slate-500 leading-normal">
+                      {v.desc}
+                    </span>
                   </button>
                 ))}
               </div>
@@ -1173,16 +1297,17 @@ export default function App() {
 
             {/* Emotion / Mood configuration */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-right">
-              
               {/* Emotion Select */}
               <div className="flex flex-col gap-2">
-                <label className="text-xs text-slate-300 font-medium">نبرة الصوت والأسلوب التعبيري:</label>
+                <label className="text-xs text-slate-300 font-medium">
+                  نبرة الصوت والأسلوب التعبيري:
+                </label>
                 <div className="grid grid-cols-2 gap-2">
                   {[
                     { id: "cheerful", name: "مرح وحيوي 😊" },
                     { id: "professional", name: "جدي واحترافي 💼" },
                     { id: "dramatic", name: "حماسي وقوي 🔥" },
-                    { id: "calm", name: "هادئ ولطيف 🍃" }
+                    { id: "calm", name: "هادئ ولطيف 🍃" },
                   ].map((e) => (
                     <button
                       key={e.id}
@@ -1202,12 +1327,14 @@ export default function App() {
 
               {/* Speech speed select */}
               <div className="flex flex-col gap-2">
-                <label className="text-xs text-slate-300 font-medium">سرعة الإلقاء ومعدل التحدث:</label>
+                <label className="text-xs text-slate-300 font-medium">
+                  سرعة الإلقاء ومعدل التحدث:
+                </label>
                 <div className="grid grid-cols-3 gap-2">
                   {[
                     { id: "slow", name: "بطيء وموزون 🐢" },
                     { id: "normal", name: "عادي طبيعي 🚶" },
-                    { id: "fast", name: "سريع وحماسي ⚡" }
+                    { id: "fast", name: "سريع وحماسي ⚡" },
                   ].map((s) => (
                     <button
                       key={s.id}
@@ -1224,7 +1351,6 @@ export default function App() {
                   ))}
                 </div>
               </div>
-
             </div>
 
             {/* FINAL GENERATE TRIGGER BUTTON */}
@@ -1236,7 +1362,9 @@ export default function App() {
               {isLoadingVoice ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin text-slate-950" />
-                  <span>جاري توليد الموجات الصوتية للفويس أوفر الاحترافي...</span>
+                  <span>
+                    جاري توليد الموجات الصوتية للفويس أوفر الاحترافي...
+                  </span>
                 </>
               ) : (
                 <>
@@ -1251,29 +1379,42 @@ export default function App() {
           <div className="bg-slate-900/10 border border-slate-900 rounded-2xl p-5 flex gap-4 text-right flex-row-reverse items-start">
             <Info className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" />
             <div className="flex flex-col gap-1">
-              <h4 className="text-slate-200 text-xs font-bold">نصائح للحصول على فويس أوفر جزائري مثالي:</h4>
+              <h4 className="text-slate-200 text-xs font-bold">
+                نصائح للحصول على فويس أوفر جزائري مثالي:
+              </h4>
               <p className="text-slate-400 text-[11px] leading-relaxed">
-                للحصول على جودة ممتازة، اضغط دائماً على "تحويل السكريبت إلى الدّارجة" في الخطوة الثانية قبل التوليد الصوتي. السكريبت المحول سيكتب بالدّارجة الجزائرية بشكل صوتي سلس، مما يجعل نموذج الذكاء الاصطناعي يلفظ الكلمات باللهجة الجزائرية بطريقة طبيعية ومتقنة بنسبة 100%!
+                للحصول على جودة ممتازة، اضغط دائماً على "تحويل السكريبت إلى
+                الدّارجة" في الخطوة الثانية قبل التوليد الصوتي. السكريبت المحول
+                سيكتب بالدّارجة الجزائرية بشكل صوتي سلس، مما يجعل نموذج الذكاء
+                الاصطناعي يلفظ الكلمات باللهجة الجزائرية بطريقة طبيعية ومتقنة
+                بنسبة 100%!
               </p>
             </div>
           </div>
-
         </div>
-
       </main>
 
       {/* --- PREMIUM USER AUTHENTICATION MODAL --- */}
       {showAuthModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in font-sans selection:bg-cyan-500 selection:text-slate-950">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 sm:p-8 shadow-2xl relative flex flex-col gap-5 text-right animate-scale-in">
-            
             {/* Close Button */}
             <button
               onClick={() => setShowAuthModal(false)}
               className="absolute top-4 left-4 text-slate-400 hover:text-white bg-slate-950/40 hover:bg-slate-950/80 p-1.5 rounded-lg border border-slate-800 transition-all cursor-pointer"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
 
@@ -1282,8 +1423,12 @@ export default function App() {
               <div className="bg-gradient-to-r from-cyan-500/10 to-teal-500/10 p-3 rounded-2xl border border-cyan-500/20">
                 <UScaleLogo className="h-8" />
               </div>
-              <h3 className="text-white font-extrabold text-base mt-2">مرحباً بك في صوت الدّارجة 🎙️</h3>
-              <p className="text-[11px] text-slate-400 text-center">قم بإنشاء حساب لحفظ مقاطعك السحابية والاستمتاع بالنقاط المجانية!</p>
+              <h3 className="text-white font-extrabold text-base mt-2">
+                مرحباً بك في صوت الدّارجة 🎙️
+              </h3>
+              <p className="text-[11px] text-slate-400 text-center">
+                قم بإنشاء حساب لحفظ مقاطعك السحابية والاستمتاع بالنقاط المجانية!
+              </p>
             </div>
 
             {/* Registration Mode Tabs */}
@@ -1319,10 +1464,15 @@ export default function App() {
             </div>
 
             {/* Auth Form */}
-            <form onSubmit={handleEmailAuthSubmit} className="flex flex-col gap-4">
+            <form
+              onSubmit={handleEmailAuthSubmit}
+              className="flex flex-col gap-4"
+            >
               {isRegistering && (
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs text-slate-300 font-bold">اسم المستخدم / اللقب:</label>
+                  <label className="text-xs text-slate-300 font-bold">
+                    اسم المستخدم / اللقب:
+                  </label>
                   <input
                     type="text"
                     required
@@ -1335,7 +1485,9 @@ export default function App() {
               )}
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs text-slate-300 font-bold">البريد الإلكتروني:</label>
+                <label className="text-xs text-slate-300 font-bold">
+                  البريد الإلكتروني:
+                </label>
                 <input
                   type="email"
                   required
@@ -1347,7 +1499,9 @@ export default function App() {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs text-slate-300 font-bold">كلمة المرور:</label>
+                <label className="text-xs text-slate-300 font-bold">
+                  كلمة المرور:
+                </label>
                 <input
                   type="password"
                   required
@@ -1385,7 +1539,9 @@ export default function App() {
 
             <div className="relative flex py-1 items-center">
               <div className="flex-grow border-t border-slate-800"></div>
-              <span className="flex-shrink mx-4 text-slate-500 text-[10px] uppercase font-bold">أو تسجيل الدخول السريع</span>
+              <span className="flex-shrink mx-4 text-slate-500 text-[10px] uppercase font-bold">
+                أو تسجيل الدخول السريع
+              </span>
               <div className="flex-grow border-t border-slate-800"></div>
             </div>
 
@@ -1396,18 +1552,21 @@ export default function App() {
               className="w-full bg-slate-950 hover:bg-slate-900 border border-slate-800 text-xs text-white font-bold py-3 rounded-xl cursor-pointer transition-all flex items-center justify-center gap-2.5 shadow-sm"
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24">
-                <path fill="#EA4335" d="M12.24 10.285V14.4h6.887c-.648 2.41-2.519 4.14-5.136 4.14A5.64 5.64 0 0 1 8.3 12.9a5.64 5.64 0 0 1 5.69-5.64c1.556 0 2.978.61 4.053 1.62l3.11-3.11A10.02 10.02 0 0 0 13.99 2 9.98 9.98 0 0 0 4 11.97a9.98 9.98 0 0 0 9.99 9.97c5.51 0 10.01-4 10.01-9.97 0-.6-.05-1.18-.15-1.685z"/>
+                <path
+                  fill="#EA4335"
+                  d="M12.24 10.285V14.4h6.887c-.648 2.41-2.519 4.14-5.136 4.14A5.64 5.64 0 0 1 8.3 12.9a5.64 5.64 0 0 1 5.69-5.64c1.556 0 2.978.61 4.053 1.62l3.11-3.11A10.02 10.02 0 0 0 13.99 2 9.98 9.98 0 0 0 4 11.97a9.98 9.98 0 0 0 9.99 9.97c5.51 0 10.01-4 10.01-9.97 0-.6-.05-1.18-.15-1.685z"
+                />
               </svg>
               سجّل فوراً بحساب جوجل Gmail
             </button>
 
             <p className="text-[10px] text-slate-500 leading-normal text-center mt-2">
-              بإنشاء الحساب، فإنك توافق على شروط الخدمة وتوافق على تحويل رصيدك الحالي لحسابك المؤمن سحابياً.
+              بإنشاء الحساب، فإنك توافق على شروط الخدمة وتوافق على تحويل رصيدك
+              الحالي لحسابك المؤمن سحابياً.
             </p>
           </div>
         </div>
       )}
-
     </div>
   );
 }
